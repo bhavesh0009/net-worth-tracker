@@ -1,0 +1,56 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+.env
+.env.development
+.env.production
+
+# Service Account Keys (Google Cloud)
+*-key.json
+*-credentials.json
+service-account*.json
+
+# Personal Financial Data & Scripts
+scripts/historical-data.js
+scripts/account-ids.json
+historical_data_details.md
+
+# Screenshots and Test Artifacts
+*.png
+.playwright-mcp/
+
+# Old/Unused Files
+app.jsx
+
+# Vercel
+.vercel
+
+# Claude Code
+.claude/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
