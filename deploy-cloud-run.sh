@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-PROJECT_ID="deep-span-266614"
+PROJECT_ID="modular-ground-487105-k2"
 SERVICE_NAME="wealthtrack"
 REGION="us-central1"
 IMAGE_NAME="gcr.io/$PROJECT_ID/$SERVICE_NAME"
