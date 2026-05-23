@@ -252,7 +252,7 @@ export default function Dashboard({ accounts, periods, records }) {
                           {data.change > 0 ? '+' : ''}{formatCurrency(data.change)}
                         </p>
                         {data.notes && (
-                          <p className="text-xs text-slate-300 mt-2 italic">"{data.notes}"</p>
+                          <p className="text-xs text-slate-300 mt-2 italic">&ldquo;{data.notes}&rdquo;</p>
                         )}
                       </div>
                     );
