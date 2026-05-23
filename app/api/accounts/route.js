@@ -4,18 +4,27 @@ import { authOptions } from '@/lib/auth';
 const { query, insertRows } = require('@/lib/bigquery');
 const { v4: uuidv4 } = require('uuid');
 
-// GET /api/accounts - Fetch all accounts
+// GET /api/accounts - Fetch all accounts with latest status-change timestamp
 export async function GET(request) {
   try {
-    // Check authentication
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const project = process.env.GCP_PROJECT_ID;
+    const dataset = process.env.GCP_DATASET_ID;
+
     const sql = `
-      SELECT * FROM \`${process.env.GCP_PROJECT_ID}.${process.env.GCP_DATASET_ID}.accounts\`
-      ORDER BY type, category, name
+      SELECT a.id, a.name, a.type, a.category, a.is_active,
+             e.changed_at AS status_changed_at
+      FROM \`${project}.${dataset}.accounts\` a
+      LEFT JOIN (
+        SELECT account_id, changed_at,
+               ROW_NUMBER() OVER (PARTITION BY account_id ORDER BY changed_at DESC) AS rn
+        FROM \`${project}.${dataset}.account_status_events\`
+      ) e ON e.account_id = a.id AND e.rn = 1
+      ORDER BY a.type, a.category, a.name
     `;
 
     const rows = await query(sql);
@@ -29,10 +38,9 @@ export async function GET(request) {
   }
 }
 
-// POST /api/accounts - Create new account
+// POST /api/accounts - Create new account (+ baseline status event)
 export async function POST(request) {
   try {
-    // Check authentication
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -56,9 +64,18 @@ export async function POST(request) {
       is_active: true,
     };
 
-    await insertRows('accounts', [newAccount]);
+    const changedAt = new Date().toISOString();
 
-    return NextResponse.json(newAccount, { status: 201 });
+    await insertRows('accounts', [newAccount]);
+    await insertRows('account_status_events', [{
+      id: uuidv4(),
+      account_id: newAccount.id,
+      is_active: true,
+      changed_at: changedAt,
+      note: 'created',
+    }]);
+
+    return NextResponse.json({ ...newAccount, status_changed_at: changedAt }, { status: 201 });
   } catch (error) {
     console.error('Error creating account:', error);
     return NextResponse.json(
