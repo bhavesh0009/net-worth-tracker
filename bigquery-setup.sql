@@ -71,6 +71,20 @@ CREATE TABLE IF NOT EXISTS `modular-ground-487105-k2.net_worth_tracker.records` 
 CLUSTER BY period_id, account_id;
 
 -- ============================================================
+-- 5. CREATE TABLE: account_status_events
+-- ============================================================
+-- Append-only history of account enable/disable changes.
+-- accounts.is_active remains the cached current state; this table is the
+-- durable record of every change. Never updated or deleted.
+CREATE TABLE IF NOT EXISTS `deep-span-266614.net_worth_tracker.account_status_events` (
+  id STRING NOT NULL,          -- uuid, generated in app code
+  account_id STRING NOT NULL,  -- references accounts.id (no FK enforced)
+  is_active BOOL NOT NULL,     -- the NEW state established by this change
+  changed_at TIMESTAMP NOT NULL,
+  note STRING                  -- optional, nullable
+);
+
+-- ============================================================
 -- VERIFICATION QUERIES
 -- ============================================================
 -- Uncomment and run these queries to verify the setup
