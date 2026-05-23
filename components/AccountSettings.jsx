@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Wallet, CreditCard } from 'lucide-react';
+import { PlusCircle, Wallet, CreditCard, Loader2 } from 'lucide-react';
 
 const formatChangedAt = (ts) => {
   // BigQuery TIMESTAMP comes back as { value: '...' }; plain ISO strings also supported.
@@ -9,16 +9,30 @@ const formatChangedAt = (ts) => {
 };
 
 function AccountRow({ acc, onSetActive }) {
+  const [submitting, setSubmitting] = useState(false);
   const disabledOn = !acc.is_active ? formatChangedAt(acc.status_changed_at) : null;
+
+  const runSetActive = async (nextActive) => {
+    setSubmitting(true);
+    try {
+      await onSetActive(acc.id, nextActive);
+    } finally {
+      // On success the row moves sections and unmounts, so this is a safe no-op then;
+      // on failure it stays mounted and the button becomes clickable again.
+      setSubmitting(false);
+    }
+  };
 
   const handleDisable = () => {
     const ok = window.confirm(
       `Disable "${acc.name}"?\n\nThis hides the account from new snapshots. All past data is kept and totals are unchanged. You can re-enable anytime.`
     );
-    if (ok) onSetActive(acc.id, false);
+    if (ok) runSetActive(false);
   };
 
-  const handleEnable = () => onSetActive(acc.id, true);
+  const handleEnable = () => runSetActive(true);
+
+  const buttonBase = 'text-sm px-3 py-1 rounded-full border flex items-center justify-center gap-1.5 min-w-[84px] disabled:opacity-60 disabled:cursor-not-allowed';
 
   return (
     <div className="p-4 border-b border-slate-50 flex items-center justify-between hover:bg-slate-50">
@@ -37,16 +51,18 @@ function AccountRow({ acc, onSetActive }) {
       {acc.is_active ? (
         <button
           onClick={handleDisable}
-          className="text-sm px-3 py-1 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50"
+          disabled={submitting}
+          className={`${buttonBase} border-rose-200 text-rose-600 hover:bg-rose-50`}
         >
-          Disable
+          {submitting ? <Loader2 size={14} className="animate-spin" /> : 'Disable'}
         </button>
       ) : (
         <button
           onClick={handleEnable}
-          className="text-sm px-3 py-1 rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+          disabled={submitting}
+          className={`${buttonBase} border-emerald-200 text-emerald-600 hover:bg-emerald-50`}
         >
-          Enable
+          {submitting ? <Loader2 size={14} className="animate-spin" /> : 'Enable'}
         </button>
       )}
     </div>
