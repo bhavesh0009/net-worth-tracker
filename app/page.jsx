@@ -86,19 +86,25 @@ export default function Home() {
     }
   };
 
-  // Handle toggle account
-  const handleToggleAccount = async (id) => {
+  // Handle enable/disable account (explicit target state)
+  const handleSetAccountActive = async (id, isActive) => {
     try {
       const response = await fetch(`/api/accounts/${id}`, {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: isActive }),
       });
 
-      if (!response.ok) throw new Error('Failed to toggle account');
+      if (!response.ok) throw new Error('Failed to update account');
 
-      // Update local state
-      setAccounts(prev => prev.map(a => a.id === id ? { ...a, is_active: !a.is_active } : a));
+      const result = await response.json();
+
+      // Update local state with new flag + change timestamp
+      setAccounts(prev => prev.map(a => a.id === id
+        ? { ...a, is_active: isActive, status_changed_at: result.status_changed_at }
+        : a));
     } catch (err) {
-      console.error('Error toggling account:', err);
+      console.error('Error updating account:', err);
       alert('Failed to update account. Please try again.');
     }
   };
@@ -289,7 +295,7 @@ export default function Home() {
         {view === 'settings' && (
           <AccountSettings
             accounts={accounts}
-            onToggle={handleToggleAccount}
+            onSetActive={handleSetAccountActive}
             onAdd={handleAddAccount}
           />
         )}
